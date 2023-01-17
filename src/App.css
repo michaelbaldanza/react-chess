@@ -17,8 +17,12 @@ ol, ul {
   margin-bottom: 10px;
 }
 
+.rank {
+  height: 45px;
+}
+
 .square {
-  background: #fff;
+  /* background: #fff; */
   border: 1px solid #999;
   /* float: left;
   font-size: 24px;
@@ -58,16 +62,11 @@ ol, ul {
 .piece {
   width: 43px;
   height: 43px;
-  fill: none;
-stroke: #646464;
-stroke-width: 1px;
-stroke-dasharray: 2,2;
-stroke-linejoin: round;
 }
 
-.black {
-  background-color: black;
-}
+/* .black {
+  background-color: green;
+} */
 
 @media (min-width: 576px) {
 

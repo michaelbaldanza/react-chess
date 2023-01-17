@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import './App.css';
 
 // name columns. rows will be named based on operations performed on this array
@@ -61,61 +61,75 @@ const movements = {
 };
 
 function Square(props) {
-  return <button className={`square ${props.color}`} id={props.notation}>
-    <div className="piece">{props.piece}</div>
-  </button>;
+  return (
+  <button
+    className={`square ${props.color}`}
+    id={props.notation}
+    style={{backgroundColor: props.color}}
+  >
+    <div
+      className="piece"
+      style={{
+        backgroundImage: `url(media/${props.piece}.svg`,
+      }}
+      onClick={props.onSquareClick}
+    >
+    </div>
+  </button>
+  );
 }
 
-class Game extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      board: createBoard(),
-    }
-  }
+export default function Board() {
+  const [squares, setSquares] = useState(createBoard());
 
-  renderSquare(notation, color, piece) {
-    return <Square
-      notation={notation}
-      color={color}
-      key={'square' + notation}
-      piece={piece}
-    />;
-  }
+  function handleClick(x, y) {
+    const nextSquares = squares.slice();
+    nextSquares[x][y] = 'X';
+    setSquares(nextSquares);
+    console.log(nextSquares);
+  }  
 
-  render() {
-    const board = this.state.board.map((row, index) => {
-      const rank = row.length - index;
-      return <div className={`rank-${rank}`} key={'rank-' + {rank}}>
-        {
-          row.map((square, idx) => {
-            const file = files[idx];
-            const piece = this.state.board[index][idx];
-            console.log(piece);
-            return this.renderSquare((file + rank), getColor(index, idx), piece);
-          })
-        }
-      </div>
-    })
-    console.log(board);
+  const board = squares.map((arr, row) => {
+    // find row number ('rank') by counting backward from second player's side
+    const rank = dims - row;
+    return <div className="rank" id={'rank-' + rank} key={'rank-' + rank}>
+      {
+        arr.map((sq, col) => {
+          // initialize notation to square's location on the grid
+          const notation = files[col] + rank;
+          return <Square
+            notation={notation}
+            // calculate color of square
+            color={getColor(row, col)}
+            // 'setup' piece; value is undefined if no piece is on the square
+            piece={sq}
+            onSquareClick={() => handleClick(row, col)}
+            key={'square-' + notation}
+          />
+        })
+      }
+    </div>
+  })
 
-    return (
-      <div className="game">
-        {board}
-      </div>
-    )
- } 
+  return (
+    <div className="game">
+      {board}
+    </div>
+  );
 }
-
-export default Game;
 
 // helper functions
 function createBoard() {
+  // chess board consists of 64 squares arranged in 8x8 grid
+  // initialize array to contain the board
   let arr = [];
   for (let i = 0; i < dims; i++) {
+    // initialize eight subarrays to act as rows in grid
     let subarr = [];
     for (let j = 0; j < dims; j++) {
-      const notation = getNotation(i, j, dims);
+      // get square's notation by finding its position in the grid
+      const notation = getNotation(i, j);
+      // look up if a piece is on the square at game start
       const piece = start[notation];
       subarr.push(piece);
     }
@@ -124,9 +138,9 @@ function createBoard() {
   return arr;
 }
 
-function getNotation(x, y, len) {
+function getNotation(x, y) {
+  const rank = dims - x;
   const file = files[y];
-  const rank = len - x;
   const notation = file + rank;
   return notation;
 }
@@ -143,7 +157,8 @@ function getColor(rowIdx, sqIdx) {
     rowIdx % 2 !== 0 && sqIdx % 2 === 0 ||
     rowIdx % 2 === 0 && sqIdx % 2 !== 0
   ) {
-    color = 'black';
+    // tiles are green so that the second player's pieces are more visible
+    color = 'green';
   }
   return color;
 }
