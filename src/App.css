@@ -40,6 +40,14 @@ ol, ul {
   outline: none;
 }
 
+.selected.green {
+  background: radial-gradient(#0ff, green);
+}
+
+.selected.white {
+  background: radial-gradient(#0ff, white);
+}
+
 .kbd-navigation .square:focus {
   background: #ddd;
 }
