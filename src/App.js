@@ -149,13 +149,13 @@ export default function Board() {
   const [log, setLog] = useState([]);
 
   function handleClick(row, col, sq) {
-    console.log(`does 0,1 contain a piece belonging to the current player?`);
-    console.log(`The current turn is ${turn}. The player is ${standard[turn]}.`);
-    console.log(`Looking up the contents of square ${row}, ${col}.`);
-    console.log(`it is ${standard[turn]}'s turn`);
+    console.log(`START PHASE ${selected ? '2' : '1'} - ${turn === 1 ? 'BLACK' : 'WHITE'}'S TURN`);
+    // console.log(`The current turn is ${turn}. It is ${standard[turn]}'s turn.`);
+    console.log(squares);
+    console.log(`This is the record of the moves:`);
     console.log(moveHistory);
-    console.log(moveHistory.length);
-    console.log(`A piece ${selected ? 'is' : 'is not'} selected`);
+    // console.log(`Its length: ${moveHistory.length}`);
+    console.log(`Looking up the contents of square ${row}, ${col}.`);
     // selectPiece(sq, turn, setSelected, selected, x, y, squares);
     if (
       selected === false &&
@@ -164,28 +164,28 @@ export default function Board() {
       return;
     } else if (
       selected === false &&
-      checkPawnMovement(turn, row, col, null, squares)
+      checkPawnMovement(turn, row, col, moveHistory, squares, selected)
       // checkPawnMovement(turn, row, col, moveHistory, squares)
       ) {
-      console.log(`hitting select condition`);
+      // console.log(`hitting select condition`);
       const nextSquares = squares.slice();
       setMoveHistory([...moveHistory, [squares[row][col], [row, col]]]);
       nextSquares[row][col].isSelected = true;
       setSquares(nextSquares);
-      console.log(nextSquares);
       setSelected(true);
     } else if (
       selected === true &&
       checkTurn(sq, turn) === false &&
-      checkPawnMovement(turn, row, col, moveHistory, squares) // &&
+      checkPawnMovement(turn, row, col, moveHistory, squares, selected) // &&
       // pathfinder(moveHistory, row, col)
     ) {
-      console.log('FINDING DESTINATION');
-      console.log(checkPawnMovement(turn, row, col, moveHistory, squares))
+      // console.log(checkPawnMovement(turn, row, col, moveHistory, squares))
       const nextSquares = squares.slice();
-      setMoveHistory([moveHistory[moveHistory.length - 1].concat([[row, col]])]);
+      const moveHistoryArr = [moveHistory[moveHistory.length - 1].concat([[row, col]])];
+      setMoveHistory([...moveHistory.slice(0, -1), moveHistory[moveHistory.length - 1].concat([[row, col]])]);
+      console.log(`Adding to moveHistory:`);
+      console.log(moveHistoryArr);
       const lastMove = moveHistory[moveHistory.length - 1];
-      console.log(moveHistory);
       pathfinder(moveHistory, row, col, squares);
       const ox = lastMove[1][0];
       const oy = lastMove[1][1];
@@ -195,10 +195,9 @@ export default function Board() {
       nextSquares[ox][oy] = undefined;
       nextSquares[nx][ny] = piece;
       piece.isSelected = false;
+      piece.hasMoved = true;
       setSquares(nextSquares);
       setSelected(false);
-      console.log(`selectDestination`);
-      console.log(moveHistory);
       setTurn(turn * -1);
     } else {
       return;
@@ -260,13 +259,13 @@ function getBoard() {
   return board;
 }
 
-function checkPawnMovement(turn, row, col, moveHistory, squares) {
+function checkPawnMovement(turn, row, col, moveHistory, squares, selected) {
   const pm = {
     '1,0': 'fwd', // move one square forward
     '2,0': '2xfwd', // move two squares forward (only on first move)
     '1,1': 'dia', // move diagonally
   }
-  if (moveHistory) {
+  if (selected) {
     const lastMove = moveHistory[moveHistory.length -1][1];
     const [oldX, oldY, newX, newY] = [lastMove[0], lastMove[1], row, col];
     const dest = squares[newX][newY];
@@ -297,14 +296,14 @@ function checkPawnMovement(turn, row, col, moveHistory, squares) {
       !squares[row][col].hasMoved ||
       squares[row + turn][col + turn] &&
       squares[row + turn][col + turn][turn] !== turn ||
-      squares[row + turn][col + turn] &&
+      squares[row + turn][col - turn] &&
       squares[row + turn][col - turn][turn] !== turn
+      // moveHistory.length add condition to validate en passant
     ) {
-      console.log(squares[row + turn][col]);
-      console.log(`returning true`);
+      // console.log(`returning true`);
       return true;
     } else {
-      console.log(`returning false`);
+      // console.log(`returning false`);
       return false;
     }
   } 
@@ -317,7 +316,6 @@ function clogger(name) {
 
 function checkTurn(square, turn) {
   const isTurn = square && square[turn] ? true : false;
-console.log(`turn is ${isTurn}`);
   return isTurn;
 }
 
@@ -348,7 +346,6 @@ function getColor(rowIdx, sqIdx) {
 function diff(n1, n2) { // finds the difference between two numbers
   const greater = n1 > n2 ? n1 : n2;
   const lesser = n2 < n1 ? n2 : n1;
-  console.log(greater, lesser);
   return greater - lesser;
 }
 
@@ -358,9 +355,7 @@ function getRank(x) {
 
 function pathfinder(moveHistory, row, col, board) {
   const mr = moveHistory[moveHistory.length - 1]; // most recent move
-  console.log([row, col]);
   const pi = board[row][col]; // the piece's initial
   const ox = mr[0]; // represents piece's old row
   const oy = mr[1]; // represents piece's old column
-  console.log(mr);
 }
