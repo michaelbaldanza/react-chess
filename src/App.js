@@ -260,19 +260,40 @@ function getBoard() {
 }
 
 function checkPawnMovement(turn, row, col, moveHistory, squares, selected) {
+  console.log(`hitting check pawn movement`);
   const pm = {
     '1,0': 'fwd', // move one square forward
     '2,0': '2xfwd', // move two squares forward (only on first move)
     '1,1': 'dia', // move diagonally
   }
   if (selected) {
-    const lastMove = moveHistory[moveHistory.length -1][1];
-    const [oldX, oldY, newX, newY] = [lastMove[0], lastMove[1], row, col];
+    const selection = moveHistory[moveHistory.length -1][1];
+    const [oldX, oldY, newX, newY] = [selection[0], selection[1], row, col];
     const dest = squares[newX][newY];
     const q = `${diff(oldX, newX)},${diff(oldY, newY)}` // set key to access obj
+    console.log('moveHistory as it stands:');
+    console.log(moveHistory);
+    console.log(`trying to log previous move:`);
+    console.log(moveHistory[moveHistory.length - 2]);
+    const pi = moveHistory.length - 2; // index of most recent move by opponent
+
     if (
-      !dest &&
-      
+      !dest && (
+      ( // en passant logic
+        pm[q] === 'dia' && // confirm target square is diagonally adjacent
+        (
+          squares[oldX][oldY - turn] &&
+          squares[oldX][oldY - turn][turn + ''] !== turn &&
+          moveHistory[pi][2][1] === (oldY - turn) // add en passant outcome (capture passed piece)
+        ) || (
+          squares[oldX][oldY + turn] && // confirm neighbour
+          squares[oldX][oldY + turn][turn] !== turn &&
+          moveHistory[pi][2][1] === (oldY + turn)
+        ) && moveHistory[pi][2][0] === (oldX - 2) &&
+        moveHistory[-2][0]['id'][0] === 'p' &&
+        diff(moveHistory[pi][1][1], moveHistory[pi][2][1])
+
+      ) ||
         pm[q] === 'fwd' ||
         (
           pm[q] === '2xfwd' &&
@@ -280,8 +301,20 @@ function checkPawnMovement(turn, row, col, moveHistory, squares, selected) {
           (oldX === 1 || oldX === 6)
         )
         // add condition for en passant later
-      || pm[q] === 'dia' && dest &&
-      dest.id[1] === standard[turn * -1]
+      ) || pm[q] === 'dia' && dest &&
+      dest.id[1] === standard[turn * -1] ||
+      (
+        (squares[row][col + turn] && // conditions for en passant requires:
+        squares[row][col + turn][turn] !== turn &&
+        moveHistory[-2][2][1] === (col + turn)) ||
+        (squares[row][col - turn] && // conditions for en passant requires:
+        squares[row][col - turn][turn] !== turn &&
+        moveHistory[-2][2][1] === (col - turn))
+      ) && // 1. a neighbouring enemy
+      moveHistory[-2][2][0] === (row - 2) &&
+      moveHistory[-2][0]['id'][0] === 'p' && // 2. that is a pawn
+      // 3. that advanced two squares on the previous turn
+      diff(moveHistory[-2][1][1], moveHistory[-2][2][1])
     ) {
       return true;
     } else {
@@ -290,20 +323,34 @@ function checkPawnMovement(turn, row, col, moveHistory, squares, selected) {
     return `${q} moves the pawn ${pm[q]}`;
   } else {
     if (
-      !squares[row + turn][col] ||
-      !squares[row + turn][col] &&
+      !squares[row + turn][col] || // condition for advancing one square
+      !squares[row + turn][col] && // condition for advancing two squares
       !squares[row + (turn * 2)][col] &&
       !squares[row][col].hasMoved ||
-      squares[row + turn][col + turn] &&
+      squares[row + turn][col + turn] && // conditions for advancing diagonally
       squares[row + turn][col + turn][turn] !== turn ||
       squares[row + turn][col - turn] &&
-      squares[row + turn][col - turn][turn] !== turn
+      squares[row + turn][col - turn][turn] !== turn ||
+      (
+        (squares[row][col + turn] && // conditions for en passant requires:
+        squares[row][col + turn][turn] !== turn &&
+        moveHistory[-2][2][1] === (col + turn)) ||
+        (squares[row][col - turn] && // conditions for en passant requires:
+        squares[row][col - turn][turn] !== turn &&
+        moveHistory[-2][2][1] === (col - turn))
+      ) && // 1. a neighbouring enemy
+      moveHistory[-2][2][0] === row &&
+      moveHistory[-2][0]['id'][0] === 'p' && // 2. that is a pawn
+      // 3. that advanced two squares on the previous turn
+      diff(moveHistory[-2][1][1], moveHistory[-2][2][1])
+
+
       // moveHistory.length add condition to validate en passant
     ) {
       // console.log(`returning true`);
       return true;
     } else {
-      // console.log(`returning false`);
+      console.log(`returning false`);
       return false;
     }
   } 
@@ -317,6 +364,13 @@ function clogger(name) {
 function checkTurn(square, turn) {
   const isTurn = square && square[turn] ? true : false;
   return isTurn;
+}
+
+function ct(x, y, t, squares) {
+  const sq = squares[x][y];
+  let turn = 0;
+  if (sq && sq.t === -1) {}
+  return squares[x][y] && squares[x]
 }
 
 function getNotation(x, y) {
